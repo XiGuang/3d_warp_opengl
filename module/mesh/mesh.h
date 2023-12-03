@@ -5,7 +5,6 @@
 #ifndef INC_3D_WARP_OPENGL_MESH_H
 #define INC_3D_WARP_OPENGL_MESH_H
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <string>
@@ -49,7 +48,7 @@ public:
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
 
     // render the mesh
-    void Draw(Shader &shader, GLuint depthMap);
+    void Draw(Shader &shader);
 
 private:
     // render data

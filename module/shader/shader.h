@@ -5,16 +5,18 @@
 #ifndef INC_3D_WARP_OPENGL_SHADER_H
 #define INC_3D_WARP_OPENGL_SHADER_H
 
-#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
 
 class Shader {
 public:
     unsigned int ID;
+
+    Shader():ID(-1){};
+
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
+    Shader(const std::string &vertexPath, const std::string &fragmentPath, const std::string &geometryPath = "");
     // activate the shader
     void use();
     // utility uniform functions

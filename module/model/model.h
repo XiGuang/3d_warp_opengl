@@ -5,7 +5,6 @@
 #ifndef INC_3D_WARP_OPENGL_MODEL_H
 #define INC_3D_WARP_OPENGL_MODEL_H
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <assimp/Importer.hpp>
@@ -17,7 +16,7 @@
 #include "../mesh/mesh.h"
 #include "../shader/shader.h"
 
-unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false);
+unsigned int TextureFromFile(const char *name, const std::string &directory, bool gamma = false);
 
 class Model {
 public:
@@ -28,19 +27,20 @@ public:
     static Texture defaultTexture;
     bool gammaCorrection;
 
-    static void SetDefaultTexture(const char *path, const std::string &directory, bool gamma = false){
-        defaultTexture.id = TextureFromFile(path, directory, gamma);
+    static void SetDefaultTexture(const std::string &name, const std::string &directory, bool gamma = false){
+        defaultTexture.id = TextureFromFile(name.c_str(), directory, gamma);
         defaultTexture.type = "texture_diffuse";
-        defaultTexture.path = path;
+        defaultTexture.path = name;
     }
 
     // constructor, expects a filepath to a 3D model.
     explicit Model(std::string const &path, bool gamma = false);
 
     // draws the model, and thus all its meshes
-    void Draw(Shader &shader, GLuint depthMap);
+    void Draw(Shader &shader);
 
 private:
+
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
     void loadModel(std::string const &path);
 

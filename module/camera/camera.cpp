@@ -2,16 +2,22 @@
 // Created by Admin on 2023/11/22.
 //
 
+#include <glad/glad.h>
 #include "camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
+// Default camera values
+//const float SPEED       =  2.5f;
+//const float SENSITIVITY =  0.1f;
+const float ZOOM        =  45.0f;
+
 
 // constructor with vectors
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
         Front(glm::vec3(0.0f, 0.0f, -1.0f)),
         MovementSpeed(SPEED),
         MouseSensitivity(SENSITIVITY),
-        Zoom(ZOOM) {
+        Zoom(ZOOM),Yaw(yaw),Pitch(pitch){
     Position = position;
     WorldUp = up;
     Yaw = yaw;
@@ -32,8 +38,21 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float u
     updateCameraVectors();
 }
 
+Camera::Camera(const glm::vec3 &position, const glm::vec3 &front, const glm::vec3 &up, glm::mat3 rotation):
+        Front(front),
+        WorldUp(up),
+        MovementSpeed(SPEED),
+        MouseSensitivity(SENSITIVITY),
+        Zoom(ZOOM),
+        Position(position){
+    Yaw = 0;
+    Pitch = 0;
+    this->Up=up;
+    rotate(rotation);
+}
+
 // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-glm::mat4 Camera::GetViewMatrix() {
+glm::mat4 Camera::GetViewMatrix() const {
     return glm::lookAt(Position, Position + Front, Up);
 }
 
@@ -51,7 +70,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
 }
 
 // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
+void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch) {
     xoffset *= MouseSensitivity;
     yoffset *= MouseSensitivity;
 
@@ -83,12 +102,25 @@ void Camera::ProcessMouseScroll(float yoffset) {
 void Camera::updateCameraVectors() {
     // calculate the new Front vector
     glm::vec3 front;
-    front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    front.y = sin(glm::radians(Pitch));
-    front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    // 以z为world up的相机控制
+    front.x = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    front.y = -sin(glm::radians(Pitch));
+    front.z = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     Front = glm::normalize(front);
     // also re-calculate the Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));
     // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     Up = glm::normalize(glm::cross(Right, Front));
 }
+
+void Camera::rotate(const glm::mat3 &rotation) {
+    Front = glm::vec3(rotation * Front);
+    Up=glm::vec3(rotation * Up);
+    Right=glm::normalize(glm::cross(Front, Up));
+//    // also re-calculate the Right and Up vector
+//    Right = glm::normalize(glm::cross(Front, WorldUp));
+//    // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+//    Up = glm::normalize(glm::cross(Right, Front));
+}
+
+

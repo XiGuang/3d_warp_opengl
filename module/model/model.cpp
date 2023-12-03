@@ -2,17 +2,17 @@
 // Created by Admin on 2023/11/22.
 //
 
+#include <glad/glad.h>
 #include "model.h"
 
 #include <sstream>
 #include <glog/logging.h>
-
 #include "../stb_image/stb_image.h"
 
 Texture Model::defaultTexture{};
 
-unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma) {
-    std::string filename = std::string(path);
+unsigned int TextureFromFile(const char *name, const std::string &directory, bool gamma) {
+    std::string filename = std::string(name);
     filename = directory + '/' + filename;
 
     unsigned int textureID;
@@ -34,8 +34,7 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
         }
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height,
-                     0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height,0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         // 纹理环绕方式
@@ -55,13 +54,15 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
     return textureID;
 }
 
+//Texture Model::defaultTexture{TextureFromFile("1.jpg", "../model",false),"texture_diffuse","1.jpg"};
+
 Model::Model(std::string const &path, bool gamma) : gammaCorrection(gamma) {
     loadModel(path);
 }
 
-void Model::Draw(Shader &shader, GLuint depthMap) {
-    for (unsigned int i = 0; i < meshes.size(); i++) {
-        meshes[i].Draw(shader, depthMap);
+void Model::Draw(Shader &shader) {
+    for (auto & mesh : meshes) {
+        mesh.Draw(shader);
     }
 }
 

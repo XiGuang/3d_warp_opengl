@@ -1,0 +1,21 @@
+viewport:
+  width: 600
+  height: 400
+
+warper:
+
+
+shader:
+  vertex_shader_path: '../shader/default.vs'
+  fragment_shader_path: '../shader/default.fs'
+  warper_vertex_shader_path: '../shader/projection.vs'
+  warper_fragment_shader_path: '../shader/projection.fs'
+
+load_model:
+  dict_path: 'D:\Projects\3d_warp_cgal\Data'
+  start_index_1: 7
+  end_index_1: 11
+  start_index_2: 22
+  end_index_2: 24
+  default_texture_path: '../model'
+  default_texture_name: '1.jpg'

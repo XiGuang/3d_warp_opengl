@@ -2,13 +2,13 @@
 // Created by Admin on 2023/11/22.
 //
 
+#include <glad/glad.h>
 #include "shader.h"
-
 #include <fstream>
 #include <sstream>
 #include <glog/logging.h>
 
-Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geometryPath) {
+Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath, const std::string &geometryPath) {
     // 1. 从文件路径中获取顶点/片段着色器
     std::string vertexCode;
     std::string fragmentCode;
@@ -36,7 +36,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geo
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
         // if geometry shader path is present, also load a geometry shader
-        if (geometryPath != nullptr) {
+        if (!geometryPath.empty()) {
             gShaderFile.open(geometryPath);
             std::stringstream gShaderStream;
             gShaderStream << gShaderFile.rdbuf();
@@ -63,7 +63,7 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geo
     checkCompileErrors(fragment, "FRAGMENT");
     // if geometry shader is given, compile geometry shader
     unsigned int geometry;
-    if (geometryPath != nullptr) {
+    if (!geometryPath.empty()) {
         const char *gShaderCode = geometryCode.c_str();
         geometry = glCreateShader(GL_GEOMETRY_SHADER);
         glShaderSource(geometry, 1, &gShaderCode, NULL);
@@ -74,14 +74,14 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath, const char *geo
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
-    if (geometryPath != nullptr)
+    if (!geometryPath.empty())
         glAttachShader(ID, geometry);
     glLinkProgram(ID);
     checkCompileErrors(ID, "PROGRAM");
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
-    if (geometryPath != nullptr)
+    if (!geometryPath.empty())
         glDeleteShader(geometry);
 }
 
