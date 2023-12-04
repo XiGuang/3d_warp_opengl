@@ -14,6 +14,7 @@ find_package(glog CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(tinyxml2 REQUIRED)
 
 file(GLOB_RECURSE srcs module/*/*.cpp)
 
@@ -26,6 +27,7 @@ set(LINK_LIBRARIES
         ${OpenCV_LIBS}
         Eigen3::Eigen
         yaml-cpp::yaml-cpp
+        tinyxml2::tinyxml2
 )
 
 set(LINK_DICT
@@ -49,15 +51,6 @@ target_include_directories(test PRIVATE ${INCLUDE_DICT})
 target_link_directories(test PRIVATE ${LINK_DICT})
 target_link_libraries(test PRIVATE ${LINK_LIBRARIES})
 
-#include_directories(${GL_Dir}/include) # 头文件和外部库的位置
-#link_directories(${GL_Dir}/lib)
-#target_link_libraries(3d_warp_opengl "C:\\Program Files (x86)\\GLFW\\lib\\libglfw3dll.a")
-#
-#target_link_libraries(3d_warp_opengl assimp::assimp)
-#include_directories("C:\\Program Files (x86)\\glm")
-#
-#target_link_libraries(3d_warp_opengl gflags pthread)
-#target_link_libraries(3d_warp_opengl glog::glog)
-#target_link_libraries(3d_warp_opengl ${OpenCV_LIBS})
-#target_link_libraries(3d_warp_opengl Eigen3::Eigen)
-#target_link_libraries(3d_warp_opengl yaml-cpp::yaml-cpp)
+add_executable(process_data process_data.cpp)
+target_link_libraries(process_data PRIVATE tinyxml2::tinyxml2 glog::glog)
+target_link_libraries(process_data PRIVATE  gflags pthread)

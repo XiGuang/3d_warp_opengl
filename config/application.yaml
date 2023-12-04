@@ -2,9 +2,6 @@ viewport:
   width: 600
   height: 400
 
-warper:
-
-
 shader:
   vertex_shader_path: '../shader/default.vs'
   fragment_shader_path: '../shader/default.fs'

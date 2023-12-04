@@ -188,23 +188,30 @@ bool Application::run() {
 void Application::updateCamera() {
     glm::vec3 position1(492786.14298105857, 2493744.2364600948, 215.55511619430035),
             position2(492782.77934889164, 2493743.0074915341, 224.51109054777771),
+            position3(492753.13358036103,2493743.0265364042,225.53376364521682),
             front(0, 0, 1),
             up(0, -1, 0),
             origin_point1(493089.5233, 2493512.718, 188.1),
-            origin_point2(492844.5,2493816.5, 110.5);
+            origin_point2(493089.5233, 2493512.718, 188.1),
+            fix_point2{0,-4,-15};
+    // 492844.5,2493816.5, 110.5
 
     glm::mat3 rotation1(-0.056613499472061943, 0.99684242183571214, 0.055678521049320473,
                         0.97378912078740676, 0.042827127455479772, 0.22338438931581872,
                         0.22029448452836028, 0.066865710065958789, -0.97313889908057793),
             rotation2(0.99997687614017161, 0.0039067723412189934, -0.0055663556136665649,
                       0.0032042275201267872, -0.99263997685343375, -0.121060353867041,
-                      -0.0059983423496136612, 0.1210397186145432, -0.99262954137319981);
-    float fov(2*std::atan((23.5/_warper.getWidth()*_warper.getHeight())/(2*35.264734005383048))),aspect((float)_warper.getWidth()/(float)_warper.getHeight());
+                      -0.0059983423496136612, 0.1210397186145432, -0.99262954137319981),
+            rotation3(0.99999041731692573,0.0029595783743092,-0.0032258596013641262,
+                      0.0024512640785848291,-0.9890532102742069,-0.14753893909983007,
+                      -0.0036271998481517409,0.14752961784717283,-0.98905098719890572);
+    float fov(2*std::atan((23.5/_warper.getWidth()*_warper.getHeight())/(2*25.500749588012695))),aspect((float)_warper.getWidth()/(float)_warper.getHeight());
 
     NewCamera camera1(position1 - origin_point1, front, up, rotation1,fov,aspect,_far,_near),
-            camera2(position2 - origin_point1, front, up, rotation2,fov,aspect,_far,_near),
+            camera2(position2 - origin_point2, front, up, rotation2,fov,aspect,_far,_near),
+            camera3(position3-origin_point2,front,up,rotation3,fov,aspect,_far,_near),
             test_camera({0,0,3},front,up,rotation1,fov,aspect,_far,_near);
-    _warper.update(camera2, camera1);
+    _warper.update(camera3, camera1);
 }
 
 void Application::loadModel(const std::filesystem::path &path, const std::string &name) {
