@@ -11,7 +11,7 @@
 #include <glog/logging.h>
 
 DEFINE_bool(flip_depth_map, false, "flip depth map vertically");
-DEFINE_bool(debug, false, "debug mode");
+DECLARE_bool(debug);
 
 using namespace std;
 
@@ -86,8 +86,9 @@ const cv::Mat & Warper::warp(ModelManager &model_manager, int threads_num) {
             for (int j(i); j < _position_data.size()/3; j += threads_num) {
                 // 将周围的点也画出来
                 int x = int (_position_data[j*3]*_width), y = int(_height - _position_data[j*3+1]*_height);
-                for (int k(-1); k <= 1; k++) {
-                    for (int l(-1); l <= 1; l++) {
+                int border_x = int(_width/100), border_y = int(_height/100);
+                for (int k(-1); k <= border_y; k++) {
+                    for (int l(-1); l <= border_x; l++) {
                         int new_x(x+l),new_y(y+k);
                         if (new_x < 0 || new_x >= _width || new_y < 0 || new_y >= _height) {
                             continue;

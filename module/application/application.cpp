@@ -8,13 +8,15 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 #include <glm/glm.hpp>
+#include <opencv2/opencv.hpp>
 #include "../stb_image/stb_image.h"
 
 DEFINE_bool(img_flip, false, "flip image vertically");
 DEFINE_bool(polygon_mode, false, "polygon mode");
 DEFINE_bool(control_camera, false, "enable to control camera");
-DEFINE_bool(is_warp, false, "enable to warp");
 DEFINE_int32(threads_num, 4, "threads num");
+
+DECLARE_bool(debug);
 
 void
 Application::loadModels(const std::filesystem::path &dict_path, int start_index_1, int end_index_1, int start_index_2,
@@ -26,8 +28,10 @@ Application::loadModels(const std::filesystem::path &dict_path, int start_index_
             std::filesystem::path file_path(dict_path);
             std::string model_name = std::format("Tile_+{:03d}_+{:03d}.obj", i, j);
             file_path.append(std::format("Tile_+{:03d}_+{:03d}", i, j));
-            model_paths.emplace_back(file_path / model_name);
-            model_names.emplace_back(model_name);
+            if(exists(file_path)){
+                model_paths.emplace_back(file_path / model_name);
+                model_names.emplace_back(model_name);
+            }
         }
     }
     _model_manager.loadModels(model_paths, model_names, threads_num);
@@ -41,6 +45,9 @@ bool Application::init() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     glfwWindowHint(GLFW_DEPTH_BITS, 32);
+    if(!FLAGS_debug){
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    }
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -76,6 +83,7 @@ bool Application::init() {
 
     // configure global opengl state
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     // draw in wireframe
     if (FLAGS_polygon_mode)
@@ -96,6 +104,19 @@ Application::Application(const std::filesystem::path &config_path) {
     loadModels(_config["load_model"]["dict_path"].as<std::string>(), _config["load_model"]["start_index_1"].as<int>(),
                _config["load_model"]["end_index_1"].as<int>(), _config["load_model"]["start_index_2"].as<int>(),
                _config["load_model"]["end_index_2"].as<int>(), FLAGS_threads_num);
+    LOG(INFO) << "Model load success";
+    auto origin_position=_config["camera_data"]["origin_point"].as<std::vector<float>>();
+    _old_camera_manager.init(_config["camera_data"]["old_data_path"].as<std::string>(),
+                             _config["camera_data"]["old_name_path"].as<std::string>(),{origin_position[0],origin_position[1],origin_position[2]});
+    _old_camera_manager.setNear(_near);
+    _old_camera_manager.setFar(_far);
+    LOG(INFO)<< "Old camera init success";
+    _new_camera_manager.init(_config["camera_data"]["new_data_path"].as<std::string>(),
+                             _config["camera_data"]["new_name_path"].as<std::string>(),{origin_position[0],origin_position[1],origin_position[2]});
+    _new_camera_manager.setNear(_near);
+    _new_camera_manager.setFar(_far);
+    LOG(INFO)<< "New camera init success";
+    LOG(INFO)<<"Application init success";
 //    loadModel("../model/test/test.obj","test");
 }
 
@@ -143,7 +164,6 @@ void Application::processInput(GLFWwindow *window) {
 }
 
 bool Application::run() {
-    updateCamera();
 
     // render loop
     // -----------
@@ -156,62 +176,86 @@ bool Application::run() {
         // input
         processInput(_window);
 
-        // 进行映射
-        if (FLAGS_is_warp) {
-            _warper.warp(_model_manager, FLAGS_threads_num);
-        }
+        auto result=_warper.warp(_model_manager, FLAGS_threads_num);
 
         // clear
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // don't forget to enable shader before setting uniforms
-        _shader.use();
+        if(FLAGS_debug){
+            // don't forget to enable shader before setting uniforms
+            _shader.use();
 
-        // view/projection transformations
-        glm::mat4 projection = _warper.getCamera1().getProjectionMatrix();
-        glm::mat4 view = _warper.getCamera1().getViewMatrix();
-        _shader.setMat4("projection", projection);
-        _shader.setMat4("view", view);
+            // view/projection transformations
+            glm::mat4 projection = _warper.getCamera1().getProjectionMatrix();
+            glm::mat4 view = _warper.getCamera1().getViewMatrix();
+            _shader.setMat4("projection", projection);
+            _shader.setMat4("view", view);
 
-        // render the loaded model
-        _model_manager.drawAllModel(_shader);
+            // render the loaded model
+            _model_manager.drawAllModel(_shader);
+        }else{
+            std::filesystem::path path(_config["camera_data"]["save_path"].as<std::string>());
+            std::string name(_old_camera_manager.getCurrentCameraName());
+            if(!name.empty()) {
+                cv::imwrite((path / name).string(), result);
+                if(_old_camera_manager.getCameraIndex()%10==0){
+                    LOG(INFO)<<"["<<_old_camera_manager.getCameraIndex()<<"/"<<_old_camera_manager.getCameraNum()<<"]"<<name<<" save success. "
+                            << 1/_delta_time<<" item/s";
+                }
+            }else
+                LOG(ERROR)<<"Camera name is empty";
+        }
 
-
+        updateCamera();
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(_window);
         glfwPollEvents();
     }
+
+    LOG(INFO)<<"Mission complete!";
     return true;
 }
 
 void Application::updateCamera() {
-    glm::vec3 position1(492786.14298105857, 2493744.2364600948, 215.55511619430035),
-            position2(492782.77934889164, 2493743.0074915341, 224.51109054777771),
-            position3(492753.13358036103,2493743.0265364042,225.53376364521682),
-            front(0, 0, 1),
-            up(0, -1, 0),
-            origin_point1(493089.5233, 2493512.718, 188.1),
-            origin_point2(493089.5233, 2493512.718, 188.1),
-            fix_point2{0,-4,-15};
-    // 492844.5,2493816.5, 110.5
+//    glm::vec3 position1(492786.14298105857, 2493744.2364600948, 215.55511619430035),
+//            position2(492782.77934889164, 2493743.0074915341, 224.51109054777771),
+//            position3(492753.13358036103,2493743.0265364042,225.53376364521682),
+//            front(0, 0, 1),
+//            up(0, -1, 0),
+//            origin_point1(493089.5233, 2493512.718, 188.1),
+//            origin_point2(493089.5233, 2493512.718, 188.1),
+//            fix_point2{0,-4,-15};
+//    // 492844.5,2493816.5, 110.5
+//
+//    glm::mat3 rotation1(-0.056613499472061943, 0.99684242183571214, 0.055678521049320473,
+//                        0.97378912078740676, 0.042827127455479772, 0.22338438931581872,
+//                        0.22029448452836028, 0.066865710065958789, -0.97313889908057793),
+//            rotation2(0.99997687614017161, 0.0039067723412189934, -0.0055663556136665649,
+//                      0.0032042275201267872, -0.99263997685343375, -0.121060353867041,
+//                      -0.0059983423496136612, 0.1210397186145432, -0.99262954137319981),
+//            rotation3(0.99999041731692573,0.0029595783743092,-0.0032258596013641262,
+//                      0.0024512640785848291,-0.9890532102742069,-0.14753893909983007,
+//                      -0.0036271998481517409,0.14752961784717283,-0.98905098719890572);
+//    float fov(2*std::atan((23.5/_warper.getWidth()*_warper.getHeight())/(2*25.500749588012695))),aspect((float)_warper.getWidth()/(float)_warper.getHeight());
+//
+//    NewCamera camera1(position1 - origin_point1, front, up, rotation1,fov,aspect,_far,_near),
+//            camera2(position2 - origin_point2, front, up, rotation2,fov,aspect,_far,_near),
+//            camera3(position3-origin_point2,front,up,rotation3,fov,aspect,_far,_near),
+//            test_camera({0,0,3},front,up,rotation1,fov,aspect,_far,_near);
+//    _warper.update(camera3, camera1);
+    CameraError camera_error_1(_old_camera_manager.updateCamera(_warper.getCamera1())),
+                camera_error_2(_new_camera_manager.updateCamera(_warper.getCamera2()));
 
-    glm::mat3 rotation1(-0.056613499472061943, 0.99684242183571214, 0.055678521049320473,
-                        0.97378912078740676, 0.042827127455479772, 0.22338438931581872,
-                        0.22029448452836028, 0.066865710065958789, -0.97313889908057793),
-            rotation2(0.99997687614017161, 0.0039067723412189934, -0.0055663556136665649,
-                      0.0032042275201267872, -0.99263997685343375, -0.121060353867041,
-                      -0.0059983423496136612, 0.1210397186145432, -0.99262954137319981),
-            rotation3(0.99999041731692573,0.0029595783743092,-0.0032258596013641262,
-                      0.0024512640785848291,-0.9890532102742069,-0.14753893909983007,
-                      -0.0036271998481517409,0.14752961784717283,-0.98905098719890572);
-    float fov(2*std::atan((23.5/_warper.getWidth()*_warper.getHeight())/(2*25.500749588012695))),aspect((float)_warper.getWidth()/(float)_warper.getHeight());
-
-    NewCamera camera1(position1 - origin_point1, front, up, rotation1,fov,aspect,_far,_near),
-            camera2(position2 - origin_point2, front, up, rotation2,fov,aspect,_far,_near),
-            camera3(position3-origin_point2,front,up,rotation3,fov,aspect,_far,_near),
-            test_camera({0,0,3},front,up,rotation1,fov,aspect,_far,_near);
-    _warper.update(camera3, camera1);
+    // 没有序号找到相应的相机
+    if(camera_error_1==CameraError::CAMERA_NOT_FOUND_CORRESPONDING || camera_error_2 == CameraError::CAMERA_NOT_FOUND_CORRESPONDING) {
+        LOG(INFO)<<"No camera named "<<_old_camera_manager.getCurrentCameraName()<<" or "<<_new_camera_manager.getCurrentCameraName();
+        updateCamera();
+    }else if(camera_error_1==CameraError::CAMERA_NO_MORE_CAMERA || camera_error_2 == CameraError::CAMERA_NO_MORE_CAMERA){
+        LOG(INFO)<<"No more camera";
+        glfwSetWindowShouldClose(_window, true);
+    }
+    
 }
 
 void Application::loadModel(const std::filesystem::path &path, const std::string &name) {

@@ -67,25 +67,6 @@ bool ModelManager::loadModels(const std::vector<std::filesystem::path> &model_pa
         return false;
     }
 
-//    std::vector<std::thread> threads;
-//    for (int i = 0; i < threads_num; ++i) {
-//        threads.emplace_back([&,i](){
-//            for (int j = i; j < model_paths.size(); j += threads_num) {
-//                if(_models.find(model_names[j])!=_models.end()){
-//                    LOG(ERROR)<<"model "<<model_names[j]<<" already exists";
-//                    continue;
-//                }
-////                auto temp_model=std::make_shared<Model>(model_paths[j].string());
-//                // 上线程锁
-//                std::lock_guard<std::mutex> lockGuard(_mutex);
-//                _models.emplace(model_names[j], std::make_pair(glm::mat4(1.0f),std::make_shared<Model>(model_paths[j].string())));
-//                LOG(INFO)<<"loaded model "<<model_names[j];
-//            }
-//        });
-//    }
-//    for (auto &thread : threads) {
-//        thread.join();
-//    }
     // 单线程
     for (int j = 0; j < model_paths.size(); ++j) {
         if(_models.find(model_names[j])!=_models.end()){

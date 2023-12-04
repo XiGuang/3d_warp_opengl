@@ -2,6 +2,14 @@ viewport:
   width: 600
   height: 400
 
+camera_data:
+  origin_point: [493089.5233,2493512.718,188.1]
+  old_data_path: '../xml/result/result_21.xml'
+  new_data_path: '../xml/result/result_23.xml'
+  old_name_path: '../xml/name/name_21.xml'
+  new_name_path: '../xml/name/name_23.xml'
+  save_path: '../result'
+
 shader:
   vertex_shader_path: '../shader/default.vs'
   fragment_shader_path: '../shader/default.fs'
@@ -10,9 +18,9 @@ shader:
 
 load_model:
   dict_path: 'D:\Projects\3d_warp_cgal\Data'
-  start_index_1: 7
-  end_index_1: 11
-  start_index_2: 22
-  end_index_2: 24
+  start_index_1: 0
+  end_index_1: 25
+  start_index_2: 16
+  end_index_2: 25
   default_texture_path: '../model'
   default_texture_name: '1.jpg'

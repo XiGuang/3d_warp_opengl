@@ -54,14 +54,14 @@ int main(int argc, char* argv[]){
         doc_name_21.SaveFile((xml_path/"name"/"name_21.xml").string().c_str());
         doc_name_23.SaveFile((xml_path/"name"/"name_23.xml").string().c_str());
     }else{
-        LOG(INFO)<<"found name xml, load it.";
+        LOG(INFO)<<"found name xml, init it.";
         XMLDocument doc_name_21,doc_name_23;
         if(doc_name_21.LoadFile((xml_path/"name"/"name_21.xml").string().c_str())!=XML_SUCCESS){
-            LOG(ERROR) << "load xml failed "<<doc_name_21.ErrorName();
+            LOG(ERROR) << "init xml failed "<<doc_name_21.ErrorName();
             return -1;
         }
         if(doc_name_23.LoadFile((xml_path/"name"/"name_23.xml").string().c_str())!=XML_SUCCESS){
-            LOG(ERROR) << "load xml failed "<<doc_name_23.ErrorName();
+            LOG(ERROR) << "init xml failed "<<doc_name_23.ErrorName();
             return -1;
         }
         XMLElement *root = doc_name_21.RootElement();
@@ -80,18 +80,18 @@ int main(int argc, char* argv[]){
 
     XMLDocument doc_21_1,doc_21_2,doc_23;
     if(doc_21_1.LoadFile((xml_path/"2021"/"0714-2000-114.xml").string().c_str())!=XML_SUCCESS){
-        LOG(ERROR) << "load xml failed "<<doc_21_1.ErrorName();
+        LOG(ERROR) << "init xml failed "<<doc_21_1.ErrorName();
         return -1;
     }
     if(doc_21_2.LoadFile((xml_path/"2021"/"2000-114.xml").string().c_str())!=XML_SUCCESS){
-        LOG(ERROR) << "load xml failed "<<doc_21_2.ErrorName();
+        LOG(ERROR) << "init xml failed "<<doc_21_2.ErrorName();
         return -1;
     }
     if(doc_23.LoadFile((xml_path/"2023"/"1.xml").string().c_str())!=XML_SUCCESS){
-        LOG(ERROR) << "load xml failed "<<doc_23.ErrorName();
+        LOG(ERROR) << "init xml failed "<<doc_23.ErrorName();
         return -1;
     }
-    LOG(INFO) << "load xml success";
+    LOG(INFO) << "init xml success";
 
     selectXML(doc_21_1,name_21);
     selectXML(doc_21_2,name_21);

@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include "../warper/warper.h"
 #include "../model_manager/model_manager.h"
+#include "../camera_manager/camera_manager.h"
 
 
 class Application {
@@ -24,6 +25,7 @@ public:
 private:
     Warper _warper;
     ModelManager _model_manager;
+    CameraManager _old_camera_manager,_new_camera_manager;
     Shader _shader;
 
     GLFWwindow *_window{};

@@ -47,7 +47,7 @@ unsigned int TextureFromFile(const char *name, const std::string &directory, boo
         stbi_image_free(data);
     }
     else {
-        LOG(ERROR) << "Texture failed to load at path: " << filename;
+        LOG(ERROR) << "Texture failed to init at path: " << filename;
         stbi_image_free(data);
     }
 
